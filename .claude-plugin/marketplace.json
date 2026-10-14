@@ -1,0 +1,11 @@
+{
+  "name": "claude-ide",
+  "owner": { "name": "Axel791" },
+  "plugins": [
+    {
+      "name": "claude-ide",
+      "source": "./",
+      "description": "Side editor in the Browser pane: several projects, editing, git diff and line comments Claude reads and resolves."
+    }
+  ]
+}

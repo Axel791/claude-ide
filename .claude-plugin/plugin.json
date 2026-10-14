@@ -1,0 +1,8 @@
+{
+  "name": "claude-ide",
+  "version": "0.1.0",
+  "description": "Side editor in the Browser pane: file trees for several projects, editing, git diff and line comments Claude reads and resolves.",
+  "author": {
+    "name": "Axel791"
+  }
+}
