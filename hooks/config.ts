@@ -18,6 +18,7 @@ export const TIMING = {
 export const TOOLS = {
   list: 'review_list',
   resolve: 'review_resolve',
+  open: 'ide_open',
 } as const
 
 export const TEXT = {
@@ -26,5 +27,6 @@ export const TEXT = {
   sortOutPrompt: 'Разбери открытые комментарии из claude-ide: поправь код и закрой каждый через review_resolve.',
   openPanePrompt: (url: string) => `Открой панель браузера Claude по адресу ${url} инструментом панели браузера (preview_start или navigate). Больше ничего не делай и ответь одной строкой.`,
   listTool: 'Lists the open line comments the user left in the claude-ide editor (file, lines, text, id).',
+  openTool: 'Opens something in the user\'s claude-ide editor beside the chat: a file (optionally at a line, or in the diff view) or a project folder, which is added to the session. Use it when the user asks to open, show or look at a file or project in the IDE. Absolute paths.',
   resolveTool: 'Marks a claude-ide comment resolved after you handled it, storing your short reply under the arrow in the editor. Use status "open" to reopen one with a question instead.',
 }

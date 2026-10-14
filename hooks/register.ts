@@ -6,7 +6,7 @@ import type { BandState } from './core/band'
 import { Comments } from './core/comments'
 import { isFresh, formatComment, pluralComments, promptContext } from './core/format'
 import { IdeClient } from './core/ide-client'
-import { openIde, rootOf } from './core/open-ide'
+import { openIde, parseOpenRequest, projectRootOf, rootOf } from './core/open-ide'
 import type { OpenIdePorts, OpenMode } from './core/open-ide'
 import { ReviewFile } from './core/review-file'
 import type { Focus, ResolveInput, Session } from './core/types'
@@ -180,8 +180,45 @@ export const register: Register = on => {
         required: ['id', 'reply'],
       },
     })
+    await $.tool.register({
+      name: TOOLS.open,
+      description: TEXT.openTool,
+      inputSchema: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'Absolute path of a file or a project folder' },
+          line: { type: 'number', description: 'Line to scroll to, for a file' },
+          mode: { type: 'string', enum: ['code', 'diff'], description: 'Show the file as code (default) or as its diff against HEAD' },
+        },
+        required: ['path'],
+      },
+    })
     $.clock.every(TIMING.bandRefreshMs, () => { void refreshBand($) })
     return started
+  })
+
+  on('tool.call', { tool: `mcp__claude-ide__${TOOLS.open}` }, async ($, e) => {
+    const req = parseOpenRequest(e as unknown as { path?: string; line?: number; mode?: string })
+    if ('error' in req) return { deny: req.error }
+    if (!(await $.fs.exists(req.path))) return { deny: `no such path: ${req.path}` }
+    const client = clientOf($)
+    const s = await sessionOf($)
+    const note = (await client.isUp()) ? '' : ` Сервер был остановлен, поднял его; панель: ${client.pageUrl(s.id, s.cwd)}`
+    if (note) await ensureServer($)
+    try {
+      const st = await $.fs.stat(req.path)
+      if (st.kind === 'dir') {
+        await client.addProject(s.id, req.path)
+        await client.openProjectInPage(s.id, req.path)
+        return { result: `Project ${req.path} added to the IDE.${note}` }
+      }
+      const root = await projectRootOf(req.path, s.cwd, p => $.fs.exists(p))
+      await client.addProject(s.id, root)
+      await client.openInPage(s.id, req.path, req.mode, root, req.line)
+      return { result: `Opened ${req.path}${req.line ? `:${req.line}` : ''} in the IDE (${req.mode}).${note}` }
+    } catch (err) {
+      return { deny: `claude-ide: ${String(err)}` }
+    }
   })
 
   // /ide [path] prints the link; /ide open [path] also tries to show the page

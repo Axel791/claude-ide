@@ -103,3 +103,22 @@ test('an Edit row gets an "open in IDE" button', async ($, on) => {
   const ui = await $.ui.mount({ plugin: 'claude-ide', surface: 'desktop', component: 'ToolUse', requestId: 'tu1', props: { tool_use_id: 'tu1', tool: 'Edit', input: { file_path: '/tmp/demo/a.py' }, isRunning: false, isErrored: false, isInterrupted: false } as never })
   expect(await ui.find({ text: 'открыть в IDE' })).toBeDefined()
 })
+
+test('ide_open sends the page a command to open the file in its project', async ($, on) => {
+  const posts: string[] = []
+  on('http.fetch', ($, e) => {
+    posts.push(`${e.init?.method ?? 'GET'} ${e.url} ${e.init?.body ?? ''}`)
+    if (e.url.endsWith('/api/health')) return { value: { status: 200, ok: true, headers: {}, text: '{"ok":true}' } }
+    return { value: { status: 200, ok: true, headers: {}, text: '{"name":"repo","path":"/repo"}' } }
+  })
+  on('session.cwd', () => ({ value: '/cwd' }))
+  on('session.id', () => ({ value: 'sess-1' }))
+  on('fs.exists', ($, e) => ({ value: e.path === '/repo/pkg/a.go' || e.path === '/repo/.git' }))
+  on('fs.stat', ($, e) => ({ value: { kind: e.path === '/repo' ? 'dir' : 'file', size: 1, mtimeMs: 0 } as never }))
+  const r = await $.tool.call({ tool: 'mcp__claude-ide__ide_open', path: '/repo/pkg/a.go', line: 33 } as never)
+  expect(r.deny).toBe(undefined)
+  expect(String(r.result)).toContain('/repo/pkg/a.go:33')
+  expect(posts.some(p => p.includes('/api/inbox?ws=sess-1') && p.includes('"line":33') && p.includes('"root":"/repo"'))).toBe(true)
+  const bad = await $.tool.call({ tool: 'mcp__claude-ide__ide_open', path: 'a.go' } as never)
+  expect(bad.deny).toContain('absolute')
+})

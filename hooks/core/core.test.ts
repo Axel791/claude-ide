@@ -3,7 +3,7 @@ import { expect, test } from 'claude-code/testing'
 import { applyComments, hide, initialBand, sortOut, statusLine } from './band'
 import { commentsBlock, focusBlock, formatComment, isFresh, pluralComments, promptContext } from './format'
 import { IdeClient } from './ide-client'
-import { openIde, rootOf } from './open-ide'
+import { openIde, parseOpenRequest, projectRootOf, rootOf } from './open-ide'
 import { ReviewFile } from './review-file'
 import type { Comment } from './types'
 
@@ -94,4 +94,14 @@ test('openIde reports each outcome and rootOf picks the session folder', async (
   expect(await openIde(client, { ...ports, ensureServer: async () => false }, s, '/d')).toContain('hint')
   expect(rootOf('/d/src/a.py', '/d')).toBe('/d')
   expect(rootOf('/e/src/a.py', '/d')).toBe('/e/src')
+})
+
+test('ide_open requests are checked and the project root is found', async () => {
+  expect(parseOpenRequest({ path: 'rel/a.py' })).toEqual({ error: 'ide_open needs an absolute path' })
+  expect(parseOpenRequest({ path: '/p/a.py', line: 12.7, mode: 'diff' })).toEqual({ path: '/p/a.py', line: 12, mode: 'diff' })
+  expect(parseOpenRequest({ path: '/p/a.py', line: -1 })).toEqual({ path: '/p/a.py', line: undefined, mode: 'code' })
+  const exists = async (p: string) => p === '/repo/.git'
+  expect(await projectRootOf('/cwd/src/a.py', '/cwd', exists)).toBe('/cwd')
+  expect(await projectRootOf('/repo/pkg/sub/a.go', '/cwd', exists)).toBe('/repo')
+  expect(await projectRootOf('/loose/a.txt', '/cwd', exists)).toBe('/loose')
 })

@@ -41,3 +41,25 @@ export async function openIde(server: IdeClient, ports: OpenIdePorts, s: Session
 export function rootOf(path: string, cwd: string): string {
   return path.startsWith(cwd + '/') ? cwd : path.slice(0, path.lastIndexOf('/'))
 }
+
+/** the nearest folder with a .git above the file, the session folder when the file is inside it,
+ *  else the file's own folder; `exists` is injected so the engine stays out of this file */
+export async function projectRootOf(path: string, cwd: string, exists: (p: string) => Promise<boolean>): Promise<string> {
+  if (cwd && path.startsWith(cwd + '/')) return cwd
+  let dir = path.slice(0, path.lastIndexOf('/'))
+  for (let i = 0; i < 8 && dir && dir !== '/'; i++) {
+    if (await exists(`${dir}/.git`)) return dir
+    dir = dir.slice(0, dir.lastIndexOf('/'))
+  }
+  return path.slice(0, path.lastIndexOf('/'))
+}
+
+export type OpenRequest = { path?: string; line?: number; mode?: string }
+
+/** what Claude's ide_open asks for, checked and normalised */
+export function parseOpenRequest(input: OpenRequest): { path: string; line?: number; mode: 'code' | 'diff' } | { error: string } {
+  const path = (input.path ?? '').trim()
+  if (!path.startsWith('/')) return { error: 'ide_open needs an absolute path' }
+  const line = typeof input.line === 'number' && input.line > 0 ? Math.floor(input.line) : undefined
+  return { path, line, mode: input.mode === 'diff' ? 'diff' : 'code' }
+}

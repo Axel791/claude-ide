@@ -39,7 +39,7 @@ Everything stays on your machine: the server listens on `127.0.0.1` only, commen
 - Fuzzy file finder (`⌘P`, `name:line` jumps to a line), `⌘B` hides the sidebar, `⌘O` opens a project.
 
 **Editing**
-- CodeMirror 5 with syntax colors for Python, TypeScript, JavaScript, HTML, CSS, YAML, TOML, JSON, Markdown, SQL, shell and Dockerfiles.
+- CodeMirror 5 with syntax colors for Python, Go, Rust, Java, Kotlin, C/C++/C#, Swift, PHP, Ruby, TypeScript, JavaScript, HTML, CSS, YAML, TOML, JSON, Markdown, SQL, Protobuf, shell and Dockerfiles.
 - Autosave 0.7 s after the last keystroke and on blur; a banner when Claude changed the file on disk while you were typing.
 - Files reload when they change on disk, so Claude's edits show up without a refresh.
 - Diff view against `HEAD`, Markdown preview, branch chip with `↑`/`↓` and one-click `git checkout`.
@@ -52,6 +52,7 @@ Everything stays on your machine: the server listens on `127.0.0.1` only, commen
 **Claude Code integration**
 - `prompt.submit` hook: open comments and the editor focus are attached as context to every prompt.
 - Tools `review_list` and `review_resolve` for Claude; resolving writes the reply back into the editor.
+- Tool `ide_open`: ask Claude to open a file at a line, show its diff, or add a project, and the editor does it.
 - A band above the prompt: "IDE · 2 comments for Claude" with *link*, *sort out* and *hide*. A toast and a status-line entry when a new comment arrives.
 - An "open in IDE" button under Claude's `Edit`, `Write` and `Read` rows in the transcript.
 

@@ -52,7 +52,12 @@ export class IdeClient {
   }
 
   /** a command for the page: open a file (in the diff view for an edit) */
-  openInPage(ws: string, path: string, mode: 'code' | 'diff', root: string): Promise<unknown> {
-    return this.json(this.url('/api/inbox', ws), 'POST', { open: { path, mode, root } })
+  openInPage(ws: string, path: string, mode: 'code' | 'diff', root: string, line?: number): Promise<unknown> {
+    return this.json(this.url('/api/inbox', ws), 'POST', { open: { path, mode, root, ...(line ? { line } : {}) } })
+  }
+
+  /** a command for the page: add a project folder to the workspace */
+  openProjectInPage(ws: string, path: string): Promise<unknown> {
+    return this.json(this.url('/api/inbox', ws), 'POST', { project: path })
   }
 }
